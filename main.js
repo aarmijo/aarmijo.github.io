@@ -92,7 +92,12 @@ function create_table()
     
     cd = "";
     
-    if(ce == contagios[i])
+    if(isNan(ce))
+    {
+      ce = "-";
+      cd = "";
+    }
+    else if(ce == contagios[i])
     {
        cd = "";
     }
@@ -107,17 +112,22 @@ function create_table()
     
     md = "";
     
-    if(me == muertos[i])
+    if(isNan(me))
     {
-       md = "";
+      me = "-";
+      md = "";
+    }
+    else if(me == muertos[i])
+    {
+      md = "";
     }
     else if(me > muertos[i])
     {
-       md = " (+" + (me-muertos[i]).toString() + ")";
+      md = " (+" + (me-muertos[i]).toString() + ")";
     }
     else
     {
-       md = " (" + (me - muertos[i]).toString() + ")";
+      md = " (" + (me - muertos[i]).toString() + ")";
     }
     
     fila = "<tr>";
