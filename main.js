@@ -202,12 +202,11 @@ function display_results()
                                        round(100*counters.ill/counters.est_ill_21, 2)).toString()+"%");
       $("#accuracy_dead").text(Math.min(round(100*counters.est_dead_21/counters.dead, 2), 
                                         round(100*counters.dead/counters.est_dead_21, 2)).toString()+"%");
-                                        
-      $("#prediction_table").html(create_table());
 }
 
 $( document ).ready(function() {
   display_results();
+  $("#prediction_table").html(create_table());
   setInterval(display_results, 5000);
   setInterval('window.location.reload()', 600000);
 });
