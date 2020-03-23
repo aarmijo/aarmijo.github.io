@@ -92,7 +92,7 @@ function create_table()
     
     cd = "";
     
-    if(isNan(ce))
+    if(isNaN(ce))
     {
       ce = "-";
       cd = "";
@@ -112,7 +112,7 @@ function create_table()
     
     md = "";
     
-    if(isNan(me))
+    if(isNaN(me))
     {
       me = "-";
       md = "";
