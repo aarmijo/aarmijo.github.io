@@ -142,13 +142,13 @@ function create_table()
       else {
         omd = " [" + round(muertos[i]/muertos[i-1], 2).toString() + "]";
       }
-      if(contagiados[i-1] == 0)
+      if(contagios[i-1] == 0)
       {
         ocd = "";
       }
       else
       {
-        ocd = " [" + round(contagiados[i]/contagiados[i-1], 2).toString() + "]";
+        ocd = " [" + round(contagios[i]/contagios[i-1], 2).toString() + "]";
       }
     }
     
