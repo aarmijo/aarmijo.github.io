@@ -130,11 +130,33 @@ function create_table()
       md = " (" + (me - muertos[i]).toString() + ")";
     }
     
+    ocd = "";
+    omd = "";
+    
+    if(i > 1)
+    {
+      if(muertos[i-1] == 0)
+      {
+        omd = "";
+      }
+      else {
+        omd = " [" + round(muertos[i]/muertos[i-1], 2).toString() + "]";
+      }
+      if(contagiados[i-1] == 0)
+      {
+        ocd = "";
+      }
+      else
+      {
+        ocd = " [" + round(contagiados[i]/contagiados[i-1], 2).toString() + "]";
+      }
+    }
+    
     fila = "<tr>";
     fila += "<td>" + fechas[i] + "</td>";
-    fila += "<td>" + contagios[i] + "</td>";
+    fila += "<td>" + contagios[i] + ocd + "</td>";
     fila += "<td>" + ce.toString() + cd + "</td>";
-    fila += "<td>" + muertos[i] + "</td>";
+    fila += "<td>" + muertos[i] + omd + "</td>";
     fila += "<td>" + me.toString() + md + "</td>";
     fila += "</tr>";
     body += fila;
