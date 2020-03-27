@@ -158,6 +158,11 @@ function create_table()
       }
     }
     
+    ocd = "";
+    cd = "";
+    omd = "";
+    md = "";
+    
     fila = "<tr>";
     fila += "<td>" + fechas[i] + "</td>";
     fila += "<td>" + contagios[i] + ocd + "</td>";
