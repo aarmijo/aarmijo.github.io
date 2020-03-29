@@ -250,11 +250,11 @@ function create_table_param(rotulo, datos)
       line = "-";
       lind = "";
     }
-    else if(loge == datos[i])
+    else if(line == datos[i])
     {
       lind = "";
     }
-    else if(loge > datos[i])
+    else if(line > datos[i])
     {
       lind = ` (+${(line - datos[i]).toString()})`;
     }
