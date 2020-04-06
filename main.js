@@ -130,6 +130,40 @@ function exponential_rms(data) {
     return round(estimated, 0);
   }
 
+  function estimate_exp_noround(data, days)
+  {
+      mydata = [];
+      for(let i=0; i<data.length; i++){
+        mydata.push([i, data[i]]);
+      }
+      coeffs = exponential_rms(mydata);
+      estimated = coeffs.A * Math.exp(coeffs.B * (data.length - 1 + days) );
+      return estimated;
+  }
+
+  function estimate_log_noround(data, days)
+  {
+      mydata = [];
+      for(let i=0; i < data.length; i++)
+      {
+        mydata.push([i+1, data[i]]);
+      }
+      coeffs = logarithmic_rms(mydata);
+      estimated = coeffs.A + coeffs.B*Math.log(data.length + days +1);
+      return estimated;
+  }
+
+  function estimate_lin_noround(data, days)
+  {
+    mydata = [];
+    for(let i=0; i<data.length; i++){
+      mydata.push([i, data[i]]);
+    }
+    coeffs = linear_rms(mydata);
+    estimated = coeffs.A * (data.length-1+days) + coeffs.B;
+    return estimated;
+  }
+
   function estimate_select(data, days, type)
   {
     if(type == 0)
@@ -143,6 +177,22 @@ function exponential_rms(data) {
     else if(type == 2)
     {
       return estimate_log(data, days);
+    }
+  }
+
+  function estimate_select_noround(data, days, type)
+  {
+    if(type == 0)
+    {
+      return estimate_exp_noround(data, days);
+    }
+    else if(type == 1)
+    {
+      return estimate_lin_noround(data, days);
+    }
+    else if(type == 2)
+    {
+      return estimate_log_noround(data, days);
     }
   }
 
@@ -212,6 +262,82 @@ function refresh_counters()
         est_ill_p7: est_i_p7,
         est_dead_p7: est_d_p7
     };
+}
+
+
+function calculate_multipliers()
+{
+  let multipliers_i = [];
+  let multipliers_d = [];
+  
+  let number_points = 5;
+
+  for (let i = 0; i < number_points - 1 ; i++) {    
+    let est_i_0 = estimate_select(contagios.slice(-9 + i, -4 + i), 1, ill_type);
+    let est_d_0 = estimate_select(muertos.slice(-9 + i, -4 + i), 1, dead_type);
+    
+    let est_i_7 = estimate_select(contagios.slice(-9 + i, -4 + i), 8, ill_type);  
+    let est_d_7 = estimate_select(muertos.slice(-9 + i, -4 + i), 8, dead_type);
+
+    let multiplier_i = est_i_7 / est_i_0;
+    let multiplier_d = est_d_7 / est_d_0;
+
+    multipliers_i.push(multiplier_i);
+    multipliers_d.push(multiplier_d);
+  } 
+
+  let est_i_0 = estimate_select(contagios.slice(-number_points), 1, ill_type);
+  let est_d_0 = estimate_select(muertos.slice(-number_points), 1, dead_type);
+    
+  let est_i_7 = estimate_select(contagios.slice(-number_points), 8, ill_type);  
+  let est_d_7 = estimate_select(muertos.slice(-number_points), 8, dead_type);
+
+  let multiplier_i = est_i_7 / est_i_0;
+  let multiplier_d = est_d_7 / est_d_0;
+    
+  multipliers_i.push(multiplier_i);
+  multipliers_d.push(multiplier_d);
+
+  let mult_i_pred = [];
+  let mult_d_pred = [];
+  for (let i = 0; i < 25; i++) { 
+    mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, ill_type));
+    mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, ill_type));
+  }
+
+  return {
+    mult_i : mult_i_pred,
+    mult_d : mult_d_pred
+  };    
+}
+
+function calculate_projections(multipliers)
+{
+  let est_i_n21 = estimate_select(contagios.slice(-5), 1, ill_type);
+  let est_d_n21 = estimate_select(muertos.slice(-5), 1, dead_type);
+
+  let proj_i = [];
+  let proj_d = [];
+
+  for (let i = 0; i < multipliers.mult_i.length; i++) {   
+    proj_i.push(est_i_n21*(multipliers.mult_i[i] - 1)/7 + est_i_n21);
+    est_i_n21 = est_i_n21*(multipliers.mult_i[i] - 1)/7 + est_i_n21;
+
+    proj_d.push(est_d_n21*(multipliers.mult_d[i] - 1)/7 + est_d_n21);
+    est_d_n21 = est_d_n21*(multipliers.mult_d[i] - 1)/7 + est_d_n21;
+  }
+  
+  let index_max_i = proj_i.indexOf(Math.max(...proj_i));
+  let index_max_d = proj_d.indexOf(Math.max(...proj_d));
+  let max_i = Math.round(proj_i[index_max_i]);
+  let max_d = Math.round(proj_d[index_max_d]);
+  
+  return {
+    total_days_i : index_max_i + 1,
+    total_days_d : index_max_d + 1,
+    total_i : max_i,
+    total_d : max_d
+  }
 }
 
 function create_table_param(rotulo, datos)
@@ -367,8 +493,17 @@ function display_results()
                                         round(100*counters.dead/counters.est_dead_21, 2)).toString()+"%");
 }
 
+function display_end_results()
+// TODO: finish
+{
+  let multipliers = calculate_multipliers();  
+  let projections = calculate_projections(multipliers);
+  console.log();
+}
+
 $( document ).ready(function() {
   display_results();
+  display_end_results();
   $("#prediction_table_ill").html(create_table_param("Contagios", contagios));
   $("#prediction_table_dead").html(create_table_param("Víctimas mortales", muertos));
   setInterval(display_results, 1000);
