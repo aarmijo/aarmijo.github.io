@@ -379,9 +379,9 @@ function calculate_multipliers()
   let mult_i_pred = [];
   let mult_d_pred = [];
   for (let i = 0; i < 180; i++) {
-    // force log estimation
-    mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, 2));
-    mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, 2));
+    // force linear estimation
+    mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, 1));
+    mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, 1));
   }
 
   return {
