@@ -347,8 +347,10 @@ function calculate_multipliers()
   let multipliers_d = [];
   
   let number_points = 5;
+  let ill_type = 1;
+  let dead_type = 1; 
 
-  for (let i = 0; i < number_points - 1 ; i++) {    
+  for (let i = 0; i < number_points - 1 ; i++) {       
     let est_i_0 = estimate_select(contagios.slice(-9 + i, -4 + i), 1, ill_type);
     let est_d_0 = estimate_select(muertos.slice(-9 + i, -4 + i), 1, dead_type);
     
@@ -376,12 +378,10 @@ function calculate_multipliers()
 
   let mult_i_pred = [];
   let mult_d_pred = [];
-  for (let i = 0; i < 180; i++) { 
-    //mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, ill_type));
-    //mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, dead_type));
-    // force lineal estimation
-    mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, 1));
-    mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, 1));
+  for (let i = 0; i < 180; i++) {
+    // force log estimation
+    mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, 2));
+    mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, 2));
   }
 
   return {
