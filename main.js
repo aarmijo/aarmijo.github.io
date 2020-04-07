@@ -47,6 +47,31 @@ function exponential_rms(data) {
    };
  }
 
+ function exponential_rms_precision(data) {
+  const sum = [0, 0, 0, 0, 0, 0];
+  const precision = 6;
+
+  for (let n = 0; n < data.length; n++) {
+    if (data[n][1] !== null) {
+      sum[0] += data[n][0];
+      sum[1] += data[n][1];
+      sum[2] += data[n][0] * data[n][0] * data[n][1];
+      sum[3] += data[n][1] * Math.log(data[n][1]);
+      sum[4] += data[n][0] * data[n][1] * Math.log(data[n][1]);
+      sum[5] += data[n][0] * data[n][1];
+    }
+  }
+
+  const denominator = ((sum[1] * sum[2]) - (sum[5] * sum[5]));
+  const a = Math.exp(((sum[2] * sum[3]) - (sum[5] * sum[4])) / denominator);
+  const b = ((sum[1] * sum[4]) - (sum[5] * sum[3])) / denominator;
+
+  return {
+    A: round(a, precision),
+    B: round(b, precision)
+  };
+}
+
  function logarithmic_rms(data) {
      const sum = [0, 0, 0, 0];
      const precision = 3;
@@ -69,6 +94,29 @@ function exponential_rms(data) {
        B: coeffB
      }
    }
+
+   function logarithmic_rms_precision(data) {
+    const sum = [0, 0, 0, 0];
+    const precision = 6;
+    const len = data.length;
+
+    for (let n = 0; n < len; n++) {
+      if (data[n][1] !== null) {
+        sum[0] += Math.log(data[n][0]);
+        sum[1] += data[n][1] * Math.log(data[n][0]);
+        sum[2] += data[n][1];
+        sum[3] += (Math.log(data[n][0]) ** 2);
+      }
+    }
+
+    const a = ((len * sum[1]) - (sum[2] * sum[0])) / ((len * sum[3]) - (sum[0] * sum[0]));
+    const coeffB = round(a, precision);
+    const coeffA = round((sum[2] - (coeffB * sum[0])) / len, precision);
+    return {
+      A: coeffA,
+      B: coeffB
+    }
+  }
 
    function linear_rms(data) {
        const sum = [0, 0, 0, 0, 0];
@@ -96,6 +144,34 @@ function exponential_rms(data) {
          B: intercept
        };
      }
+
+     function linear_rms_precision(data) {
+      const sum = [0, 0, 0, 0, 0];
+      let len = 0;
+      const precision = 6;
+
+      for (let n = 0; n < data.length; n++) {
+        if (data[n][1] !== null) {
+          len++;
+          sum[0] += data[n][0];
+          sum[1] += data[n][1];
+          sum[2] += data[n][0] * data[n][0];
+          sum[3] += data[n][0] * data[n][1];
+          sum[4] += data[n][1] * data[n][1];
+        }
+      }
+
+      const run = ((len * sum[2]) - (sum[0] * sum[0]));
+      const rise = ((len * sum[3]) - (sum[0] * sum[1]));
+      const gradient = run === 0 ? 0 : round(rise / run, precision);
+      const intercept = round((sum[1] / len) - ((gradient * sum[0]) / len), precision);
+
+      return {
+        A: gradient,
+        B: intercept
+      };
+    }
+
  function estimate_exp(data, days)
   {
       mydata = [];
@@ -136,7 +212,7 @@ function exponential_rms(data) {
       for(let i=0; i<data.length; i++){
         mydata.push([i, data[i]]);
       }
-      coeffs = exponential_rms(mydata);
+      coeffs = exponential_rms_precision(mydata);
       estimated = coeffs.A * Math.exp(coeffs.B * (data.length - 1 + days) );
       return estimated;
   }
@@ -148,7 +224,7 @@ function exponential_rms(data) {
       {
         mydata.push([i+1, data[i]]);
       }
-      coeffs = logarithmic_rms(mydata);
+      coeffs = logarithmic_rms_precision(mydata);
       estimated = coeffs.A + coeffs.B*Math.log(data.length + days +1);
       return estimated;
   }
@@ -159,7 +235,7 @@ function exponential_rms(data) {
     for(let i=0; i<data.length; i++){
       mydata.push([i, data[i]]);
     }
-    coeffs = linear_rms(mydata);
+    coeffs = linear_rms_precision(mydata);
     estimated = coeffs.A * (data.length-1+days) + coeffs.B;
     return estimated;
   }
@@ -201,14 +277,14 @@ function exponential_rms(data) {
                 "2020-03-10", "2020-03-11", "2020-03-12", "2020-03-13", "2020-03-14", "2020-03-15", "2020-03-16",
                 "2020-03-17", "2020-03-18", "2020-03-19", "2020-03-20", "2020-03-21", "2020-03-22", "2020-03-23",
                 "2020-03-24", "2020-03-25", "2020-03-26", "2020-03-27", "2020-03-28", "2020-03-29", "2020-03-30", "2020-03-31",
-                "2020-04-01", "2020-04-02"];
+                "2020-04-01", "2020-04-02", "2020-04-03", "2020-04-04", "2020-04-05", "2020-04-06", "2020-04-07"];
   var contagios = [3,10,16,32,44,66,114,135,198,237,365,430,589,999,1622,2128,2950,
                    4209,5753,7753,9191,11178,13716,17147,19980,24926,28572,33089,39793,47610,56188,64059,72248,78797,85195,
                    94417,
-                   102136, 110238];
+                   102136, 110238, 117710, 124736, 130759, 135032, 140510];
   var muertos = [0,0,0,0,0,0,0,0,0,3,5,8,17,17,35,47,84,
                  120,136,288,309,491,598,767,1002,1326,1720,2182,2696,3434,4089,4858,5690,6528,7340,8189,
-                9053, 10003];
+                9053, 10003, 10935, 11744, 12418, 13055, 13798];
 
 var dt = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
 dt.setDate( dt.getDate() - 1 );
@@ -276,11 +352,11 @@ function calculate_multipliers()
     let est_i_0 = estimate_select(contagios.slice(-9 + i, -4 + i), 1, ill_type);
     let est_d_0 = estimate_select(muertos.slice(-9 + i, -4 + i), 1, dead_type);
     
-    let est_i_7 = estimate_select(contagios.slice(-9 + i, -4 + i), 8, ill_type);  
-    let est_d_7 = estimate_select(muertos.slice(-9 + i, -4 + i), 8, dead_type);
+    let est_i_1 = estimate_select(contagios.slice(-9 + i, -4 + i), 2, ill_type);  
+    let est_d_1 = estimate_select(muertos.slice(-9 + i, -4 + i), 2, dead_type);
 
-    let multiplier_i = est_i_7 / est_i_0;
-    let multiplier_d = est_d_7 / est_d_0;
+    let multiplier_i = est_i_1 / est_i_0;
+    let multiplier_d = est_d_1 / est_d_0;
 
     multipliers_i.push(multiplier_i);
     multipliers_d.push(multiplier_d);
@@ -289,20 +365,23 @@ function calculate_multipliers()
   let est_i_0 = estimate_select(contagios.slice(-number_points), 1, ill_type);
   let est_d_0 = estimate_select(muertos.slice(-number_points), 1, dead_type);
     
-  let est_i_7 = estimate_select(contagios.slice(-number_points), 8, ill_type);  
-  let est_d_7 = estimate_select(muertos.slice(-number_points), 8, dead_type);
+  let est_i_1 = estimate_select(contagios.slice(-number_points), 2, ill_type);  
+  let est_d_1 = estimate_select(muertos.slice(-number_points), 2, dead_type);
 
-  let multiplier_i = est_i_7 / est_i_0;
-  let multiplier_d = est_d_7 / est_d_0;
+  let multiplier_i = est_i_1 / est_i_0;
+  let multiplier_d = est_d_1 / est_d_0;
     
   multipliers_i.push(multiplier_i);
   multipliers_d.push(multiplier_d);
 
   let mult_i_pred = [];
   let mult_d_pred = [];
-  for (let i = 0; i < 25; i++) { 
-    mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, ill_type));
-    mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, ill_type));
+  for (let i = 0; i < 180; i++) { 
+    //mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, ill_type));
+    //mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, dead_type));
+    // force lineal estimation
+    mult_i_pred.push(estimate_select_noround(multipliers_i, i + 1, 1));
+    mult_d_pred.push(estimate_select_noround(multipliers_d, i + 1, 1));
   }
 
   return {
@@ -320,11 +399,11 @@ function calculate_projections(multipliers)
   let proj_d = [];
 
   for (let i = 0; i < multipliers.mult_i.length; i++) {   
-    proj_i.push(est_i_n21*(multipliers.mult_i[i] - 1)/7 + est_i_n21);
-    est_i_n21 = est_i_n21*(multipliers.mult_i[i] - 1)/7 + est_i_n21;
+    proj_i.push(est_i_n21*multipliers.mult_i[i]);
+    est_i_n21 = est_i_n21*multipliers.mult_i[i];
 
-    proj_d.push(est_d_n21*(multipliers.mult_d[i] - 1)/7 + est_d_n21);
-    est_d_n21 = est_d_n21*(multipliers.mult_d[i] - 1)/7 + est_d_n21;
+    proj_d.push(est_d_n21*multipliers.mult_d[i]);
+    est_d_n21 = est_d_n21*multipliers.mult_d[i];
   }
   
   let index_max_i = proj_i.indexOf(Math.max(...proj_i));
@@ -490,15 +569,21 @@ function display_results()
       $("#accuracy_ill").text(Math.min(round(100*counters.est_ill_21/counters.ill, 2),
                                        round(100*counters.ill/counters.est_ill_21, 2)).toString()+"%");
       $("#accuracy_dead").text(Math.min(round(100*counters.est_dead_21/counters.dead, 2),
-                                        round(100*counters.dead/counters.est_dead_21, 2)).toString()+"%");
+                                        round(100*counters.dead/counters.est_dead_21, 2)).toString()+"%");      
 }
 
 function display_end_results()
-// TODO: finish
 {
   let multipliers = calculate_multipliers();  
   let projections = calculate_projections(multipliers);
-  console.log();
+  
+  $("#ill_type").text(ill_type == 0 ? 'Estimación exponencial' : ill_type == 1 ? 'Estimación lineal' : 'Estimación logarítmica');
+  $("#dead_type").text(dead_type == 0 ? 'Estimación exponencial' : dead_type == 1 ? 'Estimación lineal' : 'Estimación logarítmica');
+
+  $("#total_i").text(projections.total_i);
+  $("#total_d").text(projections.total_d);
+  $("#total_days_i").text(projections.total_days_i);
+  $("#total_days_d").text(projections.total_days_d);
 }
 
 $( document ).ready(function() {
