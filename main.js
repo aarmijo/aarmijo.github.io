@@ -276,15 +276,15 @@ function exponential_rms(data) {
                 "2020-03-03", "2020-03-04", "2020-03-05", "2020-03-06", "2020-03-07", "2020-03-08", "2020-03-09",
                 "2020-03-10", "2020-03-11", "2020-03-12", "2020-03-13", "2020-03-14", "2020-03-15", "2020-03-16",
                 "2020-03-17", "2020-03-18", "2020-03-19", "2020-03-20", "2020-03-21", "2020-03-22", "2020-03-23",
-                "2020-03-24", "2020-03-25", "2020-03-26", "2020-03-27", "2020-03-28", "2020-03-29", "2020-03-30", "2020-03-31",
-                "2020-04-01", "2020-04-02", "2020-04-03", "2020-04-04", "2020-04-05", "2020-04-06", "2020-04-07"];
+                "2020-03-24", "2020-03-25", "2020-03-26", "2020-03-27", "2020-03-28", "2020-03-29", "2020-03-30", 
+                "2020-03-31", "2020-04-01", "2020-04-02", "2020-04-03", "2020-04-04", "2020-04-05", "2020-04-06", 
+                "2020-04-07", "2020-04-08"];
   var contagios = [3,10,16,32,44,66,114,135,198,237,365,430,589,999,1622,2128,2950,
                    4209,5753,7753,9191,11178,13716,17147,19980,24926,28572,33089,39793,47610,56188,64059,72248,78797,85195,
-                   94417,
-                   102136, 110238, 117710, 124736, 130759, 135032, 140510];
+                   94417, 102136, 110238, 117710, 124736, 130759, 135032, 140510, 146690];
   var muertos = [0,0,0,0,0,0,0,0,0,3,5,8,17,17,35,47,84,
                  120,136,288,309,491,598,767,1002,1326,1720,2182,2696,3434,4089,4858,5690,6528,7340,8189,
-                9053, 10003, 10935, 11744, 12418, 13055, 13798];
+                 9053, 10003, 10935, 11744, 12418, 13055, 13798, 14555];
 
 var dt = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
 dt.setDate( dt.getDate() - 1 );
@@ -390,7 +390,33 @@ function calculate_multipliers()
   };    
 }
 
-function calculate_projections(multipliers)
+function calculate_adders(number_points)
+{
+  let adders_i = [];
+  let adders_d = [];
+  
+  let points_i = contagios.slice(- number_points - 1);
+  let points_d = muertos.slice(- number_points - 1);
+  for (let i = 0;i < number_points; i++) {
+    adders_i.push(points_i[i + 1] - points_i[i]);
+    adders_d.push(points_d[i + 1] - points_d[i]);
+  }
+
+  let adder_i_pred = [];
+  let adder_d_pred = [];
+  for (let i = 0; i < 180; i++) {
+    // force linear estimation
+    adder_i_pred.push(estimate_select_noround(adders_i, i + 1, 1));
+    adder_d_pred.push(estimate_select_noround(adders_d, i + 1, 1));
+  }
+
+  return {
+    adders_i : adder_i_pred,
+    adders_d : adder_d_pred
+  };   
+}
+
+function calculate_projections_with_multipliers(multipliers)
 {
   let est_i_n21 = estimate_select(contagios.slice(-5), 1, ill_type);
   let est_d_n21 = estimate_select(muertos.slice(-5), 1, dead_type);
@@ -411,6 +437,35 @@ function calculate_projections(multipliers)
   let max_i = Math.round(proj_i[index_max_i]);
   let max_d = Math.round(proj_d[index_max_d]);
   
+  return {
+    total_days_i : index_max_i + 1,
+    total_days_d : index_max_d + 1,
+    total_i : max_i,
+    total_d : max_d
+  }
+}
+
+function calculate_projections_with_adders(adders)
+{
+  let ill = contagios.slice(-1)[0];
+  let dead = muertos.slice(-1)[0];
+
+  let proj_i = [];
+  let proj_d = [];
+
+  for (let i = 0; i < adders.adders_d.length; i++) {   
+    proj_i.push(ill + adders.adders_i[i]);
+    ill = ill + adders.adders_i[i]
+
+    proj_d.push(dead + adders.adders_d[i]);
+    dead = dead + adders.adders_d[i];
+  }
+
+  let index_max_i = proj_i.indexOf(Math.max(...proj_i));
+  let index_max_d = proj_d.indexOf(Math.max(...proj_d));
+  let max_i = Math.round(proj_i[index_max_i]);
+  let max_d = Math.round(proj_d[index_max_d]);
+
   return {
     total_days_i : index_max_i + 1,
     total_days_d : index_max_d + 1,
@@ -572,10 +627,10 @@ function display_results()
                                         round(100*counters.dead/counters.est_dead_21, 2)).toString()+"%");      
 }
 
-function display_end_results()
+function display_end_results_with_multipliers()
 {
   let multipliers = calculate_multipliers();  
-  let projections = calculate_projections(multipliers);
+  let projections = calculate_projections_with_multipliers(multipliers);
   
   $("#ill_type").text(ill_type == 0 ? 'Estimación exponencial' : ill_type == 1 ? 'Estimación lineal' : 'Estimación logarítmica');
   $("#dead_type").text(dead_type == 0 ? 'Estimación exponencial' : dead_type == 1 ? 'Estimación lineal' : 'Estimación logarítmica');
@@ -584,11 +639,41 @@ function display_end_results()
   $("#total_d").text(projections.total_d);
   $("#total_days_i").text(projections.total_days_i);
   $("#total_days_d").text(projections.total_days_d);
+
+  let date_end_i = new Date();
+  date_end_i.setDate(date_end_i.getDate() + projections.total_days_i - 1);
+  $("#date_end_i").text(date_end_i.toLocaleDateString());
+  let date_end_d = new Date();
+  date_end_d.setDate(date_end_d.getDate() + projections.total_days_d - 1);
+  $("#date_end_d").text(date_end_d.toLocaleDateString());
+}
+
+function display_end_results_with_adders()
+{
+  let adders = calculate_adders(10);  
+  let projections = calculate_projections_with_adders(adders);
+  
+  $("#ill_type").text(ill_type == 0 ? 'Estimación exponencial' : ill_type == 1 ? 'Estimación lineal' : 'Estimación logarítmica');
+  $("#dead_type").text(dead_type == 0 ? 'Estimación exponencial' : dead_type == 1 ? 'Estimación lineal' : 'Estimación logarítmica');
+
+  $("#total_i").text(projections.total_i);
+  $("#total_d").text(projections.total_d);
+
+  $("#total_days_i").text(projections.total_days_i);
+  $("#total_days_d").text(projections.total_days_d);
+
+  let date_end_i = new Date();
+  date_end_i.setDate(date_end_i.getDate() + projections.total_days_i - 1);
+  $("#date_end_i").text(date_end_i.toLocaleDateString());
+  let date_end_d = new Date();
+  date_end_d.setDate(date_end_d.getDate() + projections.total_days_d - 1);
+  $("#date_end_d").text(date_end_d.toLocaleDateString());
 }
 
 $( document ).ready(function() {
   display_results();
-  display_end_results();
+  //display_end_results_with_multipliers();
+  display_end_results_with_adders();
   $("#prediction_table_ill").html(create_table_param("Contagios", contagios));
   $("#prediction_table_dead").html(create_table_param("Víctimas mortales", muertos));
   setInterval(display_results, 1000);
