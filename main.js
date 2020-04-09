@@ -640,10 +640,10 @@ function display_end_results_with_multipliers()
   $("#total_days_i").text(projections.total_days_i);
   $("#total_days_d").text(projections.total_days_d);
 
-  let date_end_i = new Date();
+  let date_end_i = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
   date_end_i.setDate(date_end_i.getDate() + projections.total_days_i - 1);
   $("#date_end_i").text(date_end_i.toLocaleDateString());
-  let date_end_d = new Date();
+  let date_end_d = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
   date_end_d.setDate(date_end_d.getDate() + projections.total_days_d - 1);
   $("#date_end_d").text(date_end_d.toLocaleDateString());
 }
@@ -662,10 +662,10 @@ function display_end_results_with_adders()
   $("#total_days_i").text(projections.total_days_i);
   $("#total_days_d").text(projections.total_days_d);
 
-  let date_end_i = new Date();
+  let date_end_i = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
   date_end_i.setDate(date_end_i.getDate() + projections.total_days_i - 1);
   $("#date_end_i").text(date_end_i.toLocaleDateString());
-  let date_end_d = new Date();
+  let date_end_d = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
   date_end_d.setDate(date_end_d.getDate() + projections.total_days_d - 1);
   $("#date_end_d").text(date_end_d.toLocaleDateString());
 }
