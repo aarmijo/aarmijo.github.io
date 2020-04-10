@@ -613,7 +613,7 @@ function create_table_outbreak_end(fecha_desde, number_points)
   
   for (let i = initial_index; i < fechas.length; i++) {
     let shift = fechas.length - i - 1;
-    
+
     let adders = calculate_adders(number_points, shift)
     let projections = calculate_projections_with_adders(adders, shift)
 
@@ -640,102 +640,6 @@ function create_table_outbreak_end(fecha_desde, number_points)
 
   return table;
 }
-
-  /*
-  for(let i=5; i < fechas.length; i++)
-  {
-    expe = estimate_exp(datos.slice(i-5, i), 1);
-    line = estimate_lin(datos.slice(i-5, i), 1);
-    loge = estimate_log(datos.slice(i-5, i), 1);
-
-    expd = "";
-    lind = "";
-    logd = "";
-    odd = "";
-
-    if(isNaN(expe))
-    {
-      expe = "-";
-      expd = "";
-    }
-    else if(expe == datos[i])
-    {
-      expd = "";
-    }
-    else if(expe > datos[i])
-    {
-      expd = ` (+${(expe - datos[i]).toString()})`;
-    }
-    else
-    {
-      expd = ` (${(expe - datos[i]).toString()})`;
-    }
-
-    if(isNaN(line))
-    {
-      line = "-";
-      lind = "";
-    }
-    else if(line == datos[i])
-    {
-      lind = "";
-    }
-    else if(line > datos[i])
-    {
-      lind = ` (+${(line - datos[i]).toString()})`;
-    }
-    else
-    {
-      lind = ` (${(line - datos[i]).toString()})`;
-    }
-
-    if(isNaN(loge))
-    {
-      loge = "-";
-      logd = "";
-    }
-    else if(loge == datos[i])
-    {
-      logd = "";
-    }
-    else if(loge > datos[i])
-    {
-      logd = ` (+${(loge - datos[i]).toString()})`;
-    }
-    else
-    {
-      logd = ` (${(loge - datos[i]).toString()})`;
-    }
-
-    if(i > 1)
-    {
-      if(datos[i-1] == 0)
-      {
-        odd = "";
-      }
-      else {
-        odd = ` [${round(datos[i]/datos[i-1], 2).toString()}]`;
-      }
-    }
-
-    fila = "<tr>";
-    fila += "<td>" + fechas[i] + "</td>";
-    fila += "<td>" + datos[i] + odd + "</td>";
-    fila += "<td>" + expe.toString() + expd + "</td>";
-    fila += "<td>" + line.toString() + lind + "</td>";
-    fila += "<td>" + loge.toString() + logd + "</td>";
-    fila += "</tr>";
-    body += fila;
-  }
-
-  table = "<table class='table'>";
-  table += "<thead>" + header + "</thead>";
-  table += "<tbody>" + body + "</tbody>";
-  table += "</table>";
-
-  return table;
-}
-*/
 
 function display_results()
 {
