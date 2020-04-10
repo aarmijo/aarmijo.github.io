@@ -278,13 +278,13 @@ function exponential_rms(data) {
                 "2020-03-17", "2020-03-18", "2020-03-19", "2020-03-20", "2020-03-21", "2020-03-22", "2020-03-23",
                 "2020-03-24", "2020-03-25", "2020-03-26", "2020-03-27", "2020-03-28", "2020-03-29", "2020-03-30", 
                 "2020-03-31", "2020-04-01", "2020-04-02", "2020-04-03", "2020-04-04", "2020-04-05", "2020-04-06", 
-                "2020-04-07", "2020-04-08", "2020-04-09"];
+                "2020-04-07", "2020-04-08", "2020-04-09", "2020-04-10"];
   var contagios = [3,10,16,32,44,66,114,135,198,237,365,430,589,999,1622,2128,2950,
                    4209,5753,7753,9191,11178,13716,17147,19980,24926,28572,33089,39793,47610,56188,64059,72248,78797,85195,
-                   94417, 102136, 110238, 117710, 124736, 130759, 135032, 140510, 146690, 152446];
+                   94417, 102136, 110238, 117710, 124736, 130759, 135032, 140510, 146690, 152446, 157022];
   var muertos = [0,0,0,0,0,0,0,0,0,3,5,8,17,17,35,47,84,
                  120,136,288,309,491,598,767,1002,1326,1720,2182,2696,3434,4089,4858,5690,6528,7340,8189,
-                 9053, 10003, 10935, 11744, 12418, 13055, 13798, 14555, 15238];
+                 9053, 10003, 10935, 11744, 12418, 13055, 13798, 14555, 15238, 15843];
 
 var dt = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
 dt.setDate( dt.getDate() - 1 );
@@ -309,6 +309,25 @@ var dead_type = indexOfMin([Math.abs(dead_exp - dead),
                             Math.abs(dead_lin - dead),
                             Math.abs(dead_log - dead)]);
 
+// Previous day types
+ill_previous = contagios.slice(-2)[0];
+ill_exp_previous = estimate_exp(contagios.slice(-7, -2), 1);
+ill_lin_previous = estimate_lin(contagios.slice(-7, -2), 1);
+ill_log_previous = estimate_log(contagios.slice(-7, -2), 1);
+
+var ill_type_previous = indexOfMin([Math.abs(ill_exp_previous - ill_previous),
+                                    Math.abs(ill_lin_previous - ill_previous),
+                                    Math.abs(ill_log_previous - ill_previous)]);
+
+dead_previous = muertos.slice(-2)[0];
+dead_exp_previous = estimate_exp(muertos.slice(-7, -2), 1);
+dead_lin_previous = estimate_lin(muertos.slice(-7, -2), 1);
+dead_log_previous = estimate_log(muertos.slice(-7, -2), 1);
+
+var dead_type_previous = indexOfMin([Math.abs(dead_exp_previous - dead_previous),
+                                    Math.abs(dead_lin_previous - dead_previous),
+                                    Math.abs(dead_log_previous - dead_previous)]);
+
 function refresh_counters()
 {
     difference = Date.now()-dt;
@@ -317,8 +336,8 @@ function refresh_counters()
     est_d = estimate_select(muertos.slice(-5), factor, dead_type);
     rate_i = estimate_select(contagios.slice(-5), factor+(1/24), ill_type) - est_i;
     rate_d = estimate_select(muertos.slice(-5), factor+(1/24), dead_type) - est_d;
-    est_i_21 = estimate_select(contagios.slice(-6,-1), 1, ill_type);
-    est_d_21 = estimate_select(muertos.slice(-6,-1), 1, dead_type);
+    est_i_21 = estimate_select(contagios.slice(-6,-1), 1, ill_type_previous);
+    est_d_21 = estimate_select(muertos.slice(-6,-1), 1, dead_type_previous);
     est_i_n21 = estimate_select(contagios.slice(-5), 1, ill_type);
     est_d_n21 = estimate_select(muertos.slice(-5), 1, dead_type);
     est_i_p7 = estimate_select(contagios.slice(-5), 8, ill_type);
@@ -390,14 +409,23 @@ function calculate_multipliers()
   };    
 }
 
-function calculate_adders(number_points)
+function calculate_adders(number_points, shift = 0)
 {
   let adders_i = [];
   let adders_d = [];
   
-  let points_i = contagios.slice(- number_points - 1);
-  let points_d = muertos.slice(- number_points - 1);
-  for (let i = 0;i < number_points; i++) {
+  let points_i = [];
+  let points_d = [];
+
+  if (shift > 0) {
+    points_i = contagios.slice(- number_points - shift - 1 , - shift);
+    points_d = muertos.slice(- number_points - shift - 1 , - shift);
+  } else {
+    points_i = contagios.slice(- number_points - 1);
+    points_d = muertos.slice(- number_points - 1);
+  }
+
+  for (let i = 0; i < number_points; i++) {
     adders_i.push(points_i[i + 1] - points_i[i]);
     adders_d.push(points_d[i + 1] - points_d[i]);
   }
@@ -445,10 +473,10 @@ function calculate_projections_with_multipliers(multipliers)
   }
 }
 
-function calculate_projections_with_adders(adders)
-{
-  let ill = contagios.slice(-1)[0];
-  let dead = muertos.slice(-1)[0];
+function calculate_projections_with_adders(adders, shift = 0)
+{  
+  let ill = contagios.slice(-1 - shift)[0];
+  let dead = muertos.slice(-1 - shift)[0];
 
   let proj_i = [];
   let proj_d = [];
@@ -574,7 +602,142 @@ function create_table_param(rotulo, datos)
   return table;
 }
 
+function create_table_outbreak_end(fecha_desde, number_points)
+{
+  
+  let initial_index = fechas.findIndex((e) => e == fecha_desde);
+  
+  let header =`<tr><th>Fecha</th><th>Total contagiados</th><th>Días - Fecha fin</th><th>Total muertes</th><th>Días - Fecha fin</th></tr>`;
 
+  let body = "";
+  
+  for (let i = initial_index; i < fechas.length; i++) {
+    let shift = fechas.length - i - 1;
+    //console.log(shift);
+    //console.log(fechas[i]);
+
+    let adders = calculate_adders(number_points, shift)
+    let projections = calculate_projections_with_adders(adders, shift)
+
+    let date_end_i = new Date(fechas[i]+"T19:00:00Z");
+    date_end_i.setDate(date_end_i.getDate() + projections.total_days_i - 1);
+
+    let date_end_d = new Date(fechas[i]+"T19:00:00Z");
+    date_end_d.setDate(date_end_d.getDate() + projections.total_days_d - 1);
+
+    let fila = "<tr>";
+    fila += "<td>" + fechas[i] + "</td>";
+    fila += "<td>" + projections.total_i + "</td>";
+    fila += "<td>" + projections.total_days_i + ' - ' + date_end_i.toLocaleDateString() + "</td>";
+    fila += "<td>" + projections.total_d + "</td>";
+    fila += "<td>" + projections.total_days_d + ' - ' + date_end_d.toLocaleDateString() +"</td>";
+    fila += "</tr>";
+    body += fila;
+  }
+
+  let table = "<table class='table'>";
+  table += "<thead>" + header + "</thead>";
+  table += "<tbody>" + body + "</tbody>";
+  table += "</table>";
+
+  return table;
+}
+
+  /*
+  for(let i=5; i < fechas.length; i++)
+  {
+    expe = estimate_exp(datos.slice(i-5, i), 1);
+    line = estimate_lin(datos.slice(i-5, i), 1);
+    loge = estimate_log(datos.slice(i-5, i), 1);
+
+    expd = "";
+    lind = "";
+    logd = "";
+    odd = "";
+
+    if(isNaN(expe))
+    {
+      expe = "-";
+      expd = "";
+    }
+    else if(expe == datos[i])
+    {
+      expd = "";
+    }
+    else if(expe > datos[i])
+    {
+      expd = ` (+${(expe - datos[i]).toString()})`;
+    }
+    else
+    {
+      expd = ` (${(expe - datos[i]).toString()})`;
+    }
+
+    if(isNaN(line))
+    {
+      line = "-";
+      lind = "";
+    }
+    else if(line == datos[i])
+    {
+      lind = "";
+    }
+    else if(line > datos[i])
+    {
+      lind = ` (+${(line - datos[i]).toString()})`;
+    }
+    else
+    {
+      lind = ` (${(line - datos[i]).toString()})`;
+    }
+
+    if(isNaN(loge))
+    {
+      loge = "-";
+      logd = "";
+    }
+    else if(loge == datos[i])
+    {
+      logd = "";
+    }
+    else if(loge > datos[i])
+    {
+      logd = ` (+${(loge - datos[i]).toString()})`;
+    }
+    else
+    {
+      logd = ` (${(loge - datos[i]).toString()})`;
+    }
+
+    if(i > 1)
+    {
+      if(datos[i-1] == 0)
+      {
+        odd = "";
+      }
+      else {
+        odd = ` [${round(datos[i]/datos[i-1], 2).toString()}]`;
+      }
+    }
+
+    fila = "<tr>";
+    fila += "<td>" + fechas[i] + "</td>";
+    fila += "<td>" + datos[i] + odd + "</td>";
+    fila += "<td>" + expe.toString() + expd + "</td>";
+    fila += "<td>" + line.toString() + lind + "</td>";
+    fila += "<td>" + loge.toString() + logd + "</td>";
+    fila += "</tr>";
+    body += fila;
+  }
+
+  table = "<table class='table'>";
+  table += "<thead>" + header + "</thead>";
+  table += "<tbody>" + body + "</tbody>";
+  table += "</table>";
+
+  return table;
+}
+*/
 
 function display_results()
 {
@@ -648,9 +811,9 @@ function display_end_results_with_multipliers()
   $("#date_end_d").text(date_end_d.toLocaleDateString());
 }
 
-function display_end_results_with_adders()
+function display_end_results_with_adders(number_points)
 {
-  let adders = calculate_adders(10);  
+  let adders = calculate_adders(number_points);
   let projections = calculate_projections_with_adders(adders);
   
   $("#ill_type").text(ill_type == 0 ? 'Estimación exponencial' : ill_type == 1 ? 'Estimación lineal' : 'Estimación logarítmica');
@@ -673,9 +836,10 @@ function display_end_results_with_adders()
 $( document ).ready(function() {
   display_results();
   //display_end_results_with_multipliers();
-  display_end_results_with_adders();
+  display_end_results_with_adders(10);
   $("#prediction_table_ill").html(create_table_param("Contagios", contagios));
   $("#prediction_table_dead").html(create_table_param("Víctimas mortales", muertos));
+  $("#prediction_table_outbreak_end").html(create_table_outbreak_end('2020-04-08', 10));
   setInterval(display_results, 1000);
   setInterval('window.location.reload()', 600000);
 });
