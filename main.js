@@ -613,9 +613,7 @@ function create_table_outbreak_end(fecha_desde, number_points)
   
   for (let i = initial_index; i < fechas.length; i++) {
     let shift = fechas.length - i - 1;
-    //console.log(shift);
-    //console.log(fechas[i]);
-
+    
     let adders = calculate_adders(number_points, shift)
     let projections = calculate_projections_with_adders(adders, shift)
 
