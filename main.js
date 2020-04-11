@@ -1057,7 +1057,7 @@ function plot_predictions() {
       tooltip: {
           valueSuffix: ''
       },
-    },]
+    }]
   });
 
   Highcharts.chart('chart_predictions_d', {
