@@ -287,6 +287,18 @@ function exponential_rms(data) {
                  120,136,288,309,491,598,767,1002,1326,1720,2182,2696,3434,4089,4858,5690,6528,7340,8189,
                  9053, 10003, 10935, 11744, 12418, 13055, 13798, 14555, 15238, 15843, 16353];
 
+  var char_data = {
+    daily_i : [],
+    daily_d : [],
+    prediction_date : [],
+    total_i : [],
+    total_i_days_end : [],
+    total_i_end_date : [],
+    total_d : [],
+    total_d_days_end : [],
+    total_d_end_date : []    
+  }
+
 var dt = new Date(fechas.slice(-1)[0]+"T19:00:00Z");
 dt.setDate( dt.getDate() - 1 );
 const milliseconds_a_day = 1000*3600*24;
@@ -736,6 +748,151 @@ function display_end_results_with_adders(number_points)
   $("#date_end_d").text(date_end_d.toLocaleDateString());
 }
 
+function plot_i() {
+  Highcharts.chart('chart_i', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: 'Curva epidemiológica - Contagios'
+    },
+    subtitle: {
+        text: 'Source: https://covid19.isciii.es/'
+    },
+    xAxis: {
+        categories: fechas
+    },
+    yAxis: {
+        title: {
+            text: 'Cantidad acumulada'
+        },
+        type: 'linear',
+        max: 180000
+    },
+    tooltip: {
+        crosshairs: true,
+        shared: true
+    },
+    series: [{
+        name: 'Contagios',        
+        data: contagios
+    }],
+  });
+};
+
+function plot_d() {
+  Highcharts.chart('chart_d', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: 'Curva epidemiológica - Muertes'
+    },
+    subtitle: {
+        text: 'Source: https://covid19.isciii.es/'
+    },
+    xAxis: {
+        categories: fechas
+    },
+    yAxis: {
+        title: {
+            text: 'Cantidad acumulada'
+        },
+        type: 'linear',
+        max: 20000
+    },
+    tooltip: {
+        crosshairs: true,
+        shared: true
+    },
+    series: [{
+        name: 'Muertes',        
+        data: muertos
+    }],
+    plotOptions: {
+      series: {
+          color: 'black'
+      }
+    },
+  });
+};
+
+function plot_i_d() {
+  Highcharts.chart('chart_i_d', {
+    chart: {
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'Curva epidemiológica - Contagios y Muertes'
+    },
+    subtitle: {
+        text: 'Source: https://covid19.isciii.es/'
+    },
+    xAxis: [{
+        categories: fechas,
+        crosshair: true
+    }],
+    yAxis: [{ // Primary yAxis
+        labels: {
+            format: '',
+            style: {
+                color: Highcharts.getOptions().colors[0]
+            }
+        },
+        title: {
+            text: 'Contagios',
+            style: {
+                color: Highcharts.getOptions().colors[0]
+            }
+        }
+    }, { // Secondary yAxis
+        title: {
+            text: 'Muertes',
+            style: {
+                color: Highcharts.getOptions().colors[1]
+            }
+        },
+        labels: {
+            format: '',
+            style: {
+                color: Highcharts.getOptions().colors[1]
+            }
+        },
+        opposite: true
+    }],
+    tooltip: {
+        shared: true
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        x: 120,
+        verticalAlign: 'top',
+        y: 100,
+        floating: true,
+        backgroundColor:
+            Highcharts.defaultOptions.legend.backgroundColor || // theme
+            'rgba(255,255,255,0.25)'
+    },
+    series: [{
+        name: 'Contagios',
+        type: 'column',        
+        data: contagios,
+        tooltip: {
+            valueSuffix: ''
+        },
+    }, {
+        name: 'Muertes',
+        type: 'column',
+        data: muertos,
+        yAxis: 1,
+        tooltip: {
+            valueSuffix: ''
+        }
+    }]
+  });
+}
+
 $( document ).ready(function() {
   display_results();
   //display_end_results_with_multipliers();
@@ -745,4 +902,7 @@ $( document ).ready(function() {
   $("#prediction_table_outbreak_end").html(create_table_outbreak_end('2020-04-08', 10));
   setInterval(display_results, 1000);
   setInterval('window.location.reload()', 600000);
+  //plot_i();
+  //plot_d();
+  plot_i_d();
 });
