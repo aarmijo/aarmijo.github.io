@@ -287,10 +287,8 @@ function exponential_rms(data) {
                  120,136,288,309,491,598,767,1002,1326,1720,2182,2696,3434,4089,4858,5690,6528,7340,8189,
                  9053, 10003, 10935, 11744, 12418, 13055, 13798, 14555, 15238, 15843, 16353];
 
-  var char_data = {
-    daily_i : [],
-    daily_d : [],
-    prediction_date : [],
+  var chart_prediction_data = {
+    dates : [],
     total_i : [],
     total_i_days_end : [],
     total_i_end_date : [],
@@ -644,6 +642,14 @@ function create_table_outbreak_end(fecha_desde, number_points)
     fila += "<td>" + projections.total_days_d + ' - ' + date_end_d.toLocaleDateString() +"</td>";
     fila += "</tr>";
     body += fila;
+
+    chart_prediction_data.dates.push(fechas[i]);
+    chart_prediction_data.total_i.push(projections.total_i);
+    chart_prediction_data.total_i_days_end.push(projections.total_days_i);
+    chart_prediction_data.total_i_end_date.push(date_end_i.toLocaleDateString())
+    chart_prediction_data.total_d.push(projections.total_d);
+    chart_prediction_data.total_d_days_end.push(projections.total_days_d);
+    chart_prediction_data.total_d_end_date.push(date_end_d.toLocaleDateString())
   }
 
   let table = "<table class='table'>";
@@ -893,16 +899,258 @@ function plot_i_d() {
   });
 }
 
+function plot_daily_charts() {
+  let dates = [];
+  let daily_i = [];
+  let daily_d = [];
+  let initial_index = fechas.findIndex((e) => e == '2020-03-08');
+
+  for (let i = initial_index; i < fechas.length - 1; i++) {
+    dates.push(fechas[i]);
+    daily_i.push(contagios[i+1] - contagios[i]);
+    daily_d.push(muertos[i+1] - muertos[i]);
+  }
+
+  Highcharts.chart('chart_daily_i', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: 'Curva acumulados - Contagios'
+    },
+    subtitle: {
+        text: 'Source: https://covid19.isciii.es/'
+    },
+    xAxis: {
+        categories: dates
+    },
+    yAxis: {
+        title: {
+            text: 'Cantidad acumulada'
+        },
+        type: 'linear',
+        max: 9000
+    },
+    tooltip: {
+        crosshairs: true,
+        shared: true
+    },
+    series: [{
+        name: 'Contagios',        
+        data: daily_i
+    }],
+    plotOptions: {
+      series: {
+          color: Highcharts.getOptions().colors[0]
+      }
+    },
+  });
+
+  Highcharts.chart('chart_daily_d', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: 'Curva acumulados - Muertes'
+    },
+    subtitle: {
+        text: 'Source: https://covid19.isciii.es/'
+    },
+    xAxis: {
+        categories: dates
+    },
+    yAxis: {
+        title: {
+            text: 'Cantidad acumulada'
+        },
+        type: 'linear',
+        max: 1000
+    },
+    tooltip: {
+        crosshairs: true,
+        shared: true
+    },
+    series: [{
+        name: 'Muertes',        
+        data: daily_d
+    }],
+    plotOptions: {
+      series: {
+          color: Highcharts.getOptions().colors[1]
+      }
+    },
+  });
+}
+
+function plot_predictions() {
+  Highcharts.chart('chart_predictions_i', {
+    chart: {
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'Predicciones final de la primera ola - Contagios'
+    },
+    subtitle: {
+        text: 'Source: https://covid19.isciii.es/'
+    },
+    xAxis: [{
+        categories: chart_prediction_data.dates,
+        crosshair: true
+    }],
+    yAxis: [{ // Primary yAxis
+        labels: {
+            format: '',
+            style: {
+                color: Highcharts.getOptions().colors[0]
+            }
+        },
+        title: {
+            text: 'Total contagiados',
+            style: {
+                color: Highcharts.getOptions().colors[0]
+            }
+        }
+    }, { // Secondary yAxis
+        title: {
+            text: 'Días para el final',
+            style: {
+                color: Highcharts.getOptions().colors[2]
+            }
+        },
+        labels: {
+            format: '',
+            style: {
+                color: Highcharts.getOptions().colors[2]
+            }
+        },
+        opposite: true,
+        allowDecimals: false
+    }],
+    tooltip: {
+        shared: true
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        x: 800,
+        verticalAlign: 'top',
+        y: 0,
+        floating: true,
+        backgroundColor:
+            Highcharts.defaultOptions.legend.backgroundColor || // theme
+            'rgba(255,255,255,0.25)'
+    },
+    series: [{
+      name: 'Días para el final',
+      type: 'column',
+      data: chart_prediction_data.total_i_days_end,
+      yAxis: 1,
+      tooltip: {
+          valueSuffix: ''
+      },
+      color: Highcharts.getOptions().colors[2]
+    },      
+    {
+      name: 'Total contagiados',
+      type: 'spline',        
+      data: chart_prediction_data.total_i,
+      tooltip: {
+          valueSuffix: ''
+      },
+    },]
+  });
+
+  Highcharts.chart('chart_predictions_d', {
+    chart: {
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'Predicciones final de la primera ola - Muertes'
+    },
+    subtitle: {
+        text: 'Source: https://covid19.isciii.es/'
+    },
+    xAxis: [{
+        categories: chart_prediction_data.dates,
+        crosshair: true
+    }],
+    yAxis: [{ // Primary yAxis
+        labels: {
+            format: '',
+            style: {
+                color: Highcharts.getOptions().colors[1]
+            }
+        },
+        title: {
+            text: 'Total muertes',
+            style: {
+                color: Highcharts.getOptions().colors[1]
+            }
+        }
+    }, { // Secondary yAxis
+        title: {
+            text: 'Días para el final',
+            style: {
+                color: Highcharts.getOptions().colors[2]
+            }
+        },
+        labels: {
+            format: '',
+            style: {
+                color: Highcharts.getOptions().colors[2]
+            }
+        },
+        opposite: true,
+        allowDecimals: false
+    }],
+    tooltip: {
+        shared: true
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        x: 800,
+        verticalAlign: 'top',
+        y: 0,
+        floating: true,
+        backgroundColor:
+            Highcharts.defaultOptions.legend.backgroundColor || // theme
+            'rgba(255,255,255,0.25)'
+    },
+    series: [{
+        name: 'Días para el final',
+        type: 'column',
+        data: chart_prediction_data.total_d_days_end,
+        yAxis: 1,   
+        tooltip: {
+            valueSuffix: ''
+        },
+        color: Highcharts.getOptions().colors[2]
+    },
+    {
+        name: 'Total muertos',
+        type: 'spline',        
+        data: chart_prediction_data.total_d,        
+        tooltip: {
+            valueSuffix: ''
+        },
+        color: Highcharts.getOptions().colors[1]
+    }]
+  });
+}
+
 $( document ).ready(function() {
   display_results();
   //display_end_results_with_multipliers();
   display_end_results_with_adders(10);
   $("#prediction_table_ill").html(create_table_param("Contagios", contagios));
   $("#prediction_table_dead").html(create_table_param("Víctimas mortales", muertos));
-  $("#prediction_table_outbreak_end").html(create_table_outbreak_end('2020-04-08', 10));
+  $("#prediction_table_outbreak_end").html(create_table_outbreak_end('2020-04-06', 10));
   setInterval(display_results, 1000);
   setInterval('window.location.reload()', 600000);
   //plot_i();
   //plot_d();
   plot_i_d();
+  plot_daily_charts();
+  plot_predictions();
 });
