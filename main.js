@@ -1155,7 +1155,7 @@ $( document ).ready(function() {
   display_end_results_with_adders(number_points);
   $("#prediction_table_ill").html(create_table_param("Contagios", contagios));
   $("#prediction_table_dead").html(create_table_param("Víctimas mortales", muertos));
-  $("#prediction_table_outbreak_end").html(create_table_outbreak_end('2020-04-14', number_points));
+  $("#prediction_table_outbreak_end").html(create_table_outbreak_end('2020-04-18', number_points));
   setInterval(display_results, 1000);
   setInterval('window.location.reload()', 600000);
   //plot_i();
